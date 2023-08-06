@@ -32,6 +32,7 @@ func (n *NoPad) IncreaseB() {
 	atomic.AddUint64(&n.b, 1)
 }
 
+// a、_p1 占满一个 cpu 缓存行
 type Pad struct {
 	a   uint64
 	_p1 [7]uint64
