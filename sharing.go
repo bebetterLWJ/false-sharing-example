@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"sync/atomic"
-	"unsafe"
 )
 
 type MyAtomic interface {
@@ -32,6 +30,8 @@ func (n *NoPad) IncreaseB() {
 	atomic.AddUint64(&n.b, 1)
 }
 
+// default size of cpu cache line is 64 bytes，sizeof(a)=8, sizeof(_p1)=56
+//a and _p1 occupy cpu cache line
 type Pad struct {
 	a   uint64
 	_p1 [7]uint64
@@ -53,11 +53,4 @@ func (p *Pad) IncreaseA() {
 
 func (p *Pad) IncreaseB() {
 	atomic.AddUint64(&p.b, 1)
-}
-
-func main() {
-	pad := &Pad{}
-	pad.IncreaseAll()
-	fmt.Printf("%d\n", pad.a)
-	fmt.Println(unsafe.Sizeof(Pad{}))
 }

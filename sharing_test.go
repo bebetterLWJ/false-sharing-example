@@ -1,37 +1,36 @@
 package main
 
 import (
-	"fmt"
 	"runtime"
+	"sync"
 	"testing"
 )
 
 func testAtomicIncrease(myatomic MyAtomic) {
+	// set cpu cores to 4，which makes false-string more likely
 	runtime.GOMAXPROCS(4)
-	paraNum := 1000
-	repeatNum := 1000
-	channelA := make(chan int, 1)
-	channelB := make(chan int, 1)
-	channelA <- 1
+	paraNum := 10000
+	repeatNum := 10000
+	var wg sync.WaitGroup
 	for i := 0; i < paraNum; i++ {
+		// wg.Add should not in go func,if wg.add in goroutine, can cause "sync: WaitGroup misuse: Add called concurrently with Wait"
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			for j := 0; j < repeatNum; j++ {
-				fmt.Println(i, j)
-				<-channelB
 				myatomic.IncreaseA()
-				channelA <- 0
 			}
 		}()
+
+		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			for j := 0; j < repeatNum; j++ {
-				<-channelA
 				myatomic.IncreaseB()
-				channelB <- 0
 			}
 		}()
 	}
-	<-channelA
-
+	wg.Wait()
 }
 
 func BenchmarkNoPad(b *testing.B) {
